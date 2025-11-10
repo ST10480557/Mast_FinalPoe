@@ -9,21 +9,83 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 type Course = "Starters" | "Mains" | "Desserts";
 type Dish = { id: string; name: string; description?: string; course: Course; price: number; createdAt: number; };
 
+/**
+ * Changelog
+ * ---------
+ * v1.0.0 - Initial release
+ * - Basic menu management
+ * - Add/remove dishes
+ * - Course filtering
+ * - Price display
+ * 
+ * v1.1.0 
+ * - Added cart functionality
+ * - Added dark/light theme
+ * - Added price averages per course
+ * 
+ * v1.2.0
+ * - Improved UI/UX
+ * - Added confirmation dialogs
+ * - Fixed cart persistence
+ * - Added search functionality
+ * - Separated filter screen
+ * 
+ * v1.3.0
+ * - Bug fixes and improvements
+ * - Better error handling
+ * - Improved type safety
+ * - Enhanced dark mode contrast
+ */
+
 const STORAGE_KEY = "@chef_menu_items_v2";
 const CART_KEY = "@chef_menu_cart_v1";
 const COURSES: Course[] = ["Starters", "Mains", "Desserts"];
 
 const THEMES = {
   Light: { primary: "#246BFD", accent: "#FF6B6B", bg: "#F6F8FB", card: "#fff", text: "#1F2937", muted: "#6B7280", accentAlt: "#FFD6D6" },
-  Dark:  { primary: "#0EA5A4", accent: "#F97316", bg: "#0F1724", card: "#061021", text: "#E6EEF8", muted: "#94A3B8", accentAlt: "#1F2937" },
+  Dark:  { primary: "#0EA5A4", accent: "#F97316", bg: "#0F1724", card: "#061021", text: "#FFFFFF", muted: "#94A3B8", accentAlt: "#1F2937" },
 } as const;
 
-const load = async (): Promise<Dish[]> => { try { const r = await AsyncStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : []; } catch { return []; } };
-const save = async (items: Dish[]) => { try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {} };
-const loadCart = async () => { try { const r = await AsyncStorage.getItem(CART_KEY); return r ? JSON.parse(r) as Record<string,number> : {}; } catch { return {}; } };
-const saveCart = async (c: Record<string,number>) => { try { await AsyncStorage.setItem(CART_KEY, JSON.stringify(c)); } catch {} };
+const load = async (): Promise<Dish[]> => { 
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Error loading dishes:', error);
+    return [];
+  }
+};
 
-const courseColor = (c: Course) => c === "Starters" ? "#FFB86B" : c === "Mains" ? "#6BB0FF" : "#FF8ACB";
+const save = async (items: Dish[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch (error) {
+    console.error('Error saving dishes:', error);
+  }
+};
+
+const loadCart = async (): Promise<Record<string, number>> => {
+  try {
+    const data = await AsyncStorage.getItem(CART_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch (error) {
+    console.error('Error loading cart:', error);
+    return {};
+  }
+};
+
+const saveCart = async (cart: Record<string, number>): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(CART_KEY, JSON.stringify(cart));
+  } catch (error) {
+    console.error('Error saving cart:', error);
+  }
+};
+
+const courseColor = (c: Course): string => 
+  c === "Starters" ? "#FFB86B" : 
+  c === "Mains" ? "#6BB0FF" : 
+  "#FF8ACB";
 
 const makeStyles = (t: typeof THEMES[keyof typeof THEMES]) => StyleSheet.create({
   root:{flex:1,backgroundColor:t.bg},
@@ -131,37 +193,152 @@ function Customer({ menu, openManager, styles, addToCart, filter, openFilter }: 
 }
 
 function Chef({ menu, add, remove, back, styles }: any) {
-  const [name,setName]=useState(""); const [desc,setDesc]=useState(""); const [course,setCourse]=useState<Course>("Mains"); const [price,setPrice]=useState("");
-  const submit = ()=> {
-    if(!name.trim()) return Alert.alert("Validation","Enter dish name.");
-    const p = parseFloat(price); if(Number.isNaN(p)||p<0) return Alert.alert("Validation","Enter valid price.");
-    add({ name: name.trim(), description: desc.trim(), course, price: p });
-    setName(""); setDesc(""); setCourse("Mains"); setPrice("");
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [course, setCourse] = useState<Course>("Mains");
+  const [price, setPrice] = useState("");
+
+  const submit = () => {
+    // Validation
+    if (!name.trim()) {
+      Alert.alert("Error", "Please enter a dish name");
+      return;
+    }
+
+    const priceNum = parseFloat(price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      Alert.alert("Error", "Please enter a valid price");
+      return;
+    }
+
+    // Add the dish
+    add({
+      name: name.trim(),
+      description: desc.trim() || undefined, // Only include if not empty
+      course,
+      price: priceNum
+    });
+
+    // Reset form
+    setName("");
+    setDesc("");
+    setCourse("Mains");
+    setPrice("");
+
+    // Show confirmation
+    Alert.alert("Success", "Dish added successfully");
   };
+
   return (
-    <KeyboardAvoidingView style={styles.body} behavior={Platform.OS==="ios"?"padding":undefined}>
-      <View style={{padding:12,backgroundColor:styles.card.backgroundColor,borderBottomWidth:1,borderBottomColor:'#eee'}}>
-        <TouchableOpacity onPress={back}><Text style={{color:styles.title.color}}>Back</Text></TouchableOpacity>
-        <Text style={{fontWeight:900,fontSize:18}}>Manager — Add / Remove</Text>
-      </View>
+    <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <View style={{padding:12, backgroundColor:styles.card.backgroundColor}}>
+        <TouchableOpacity onPress={back}><Text style={{color:styles.primary.backgroundColor}}>Back</Text></TouchableOpacity>
+        <Text style={{fontSize:20, fontWeight:"900", marginVertical:8}}>Add New Dish</Text>
+        
+        <TextInput 
+          placeholder="Dish Name"
+          value={name}
+          onChangeText={setName}
+          style={[styles.input, {marginBottom:8}]}
+          placeholderTextColor={styles.meta.color}
+        />
 
-      <View style={{padding:12,backgroundColor:styles.card.backgroundColor}}>
-        <TextInput placeholder="Name" value={name} onChangeText={setName} style={styles.input} />
-        <TextInput placeholder="Description" value={desc} onChangeText={setDesc} style={[styles.input,{height:80,marginTop:8}]} multiline />
-        <View style={{flexDirection:'row',marginTop:8}}>{COURSES.map(c=> <TouchableOpacity key={c} onPress={()=>setCourse(c)} style={{flex:1,marginRight:8,padding:10,backgroundColor: course===c ? styles.primary.backgroundColor : styles.card.backgroundColor,borderRadius:10}}><Text style={{textAlign:'center'}}>{c}</Text></TouchableOpacity>)}</View>
-        <TextInput placeholder="Price" value={price} onChangeText={setPrice} keyboardType="decimal-pad" style={[styles.input,{marginTop:8}]} />
-        <View style={{flexDirection:'row',marginTop:10}}>
-          <TouchableOpacity onPress={()=>{setName("");setDesc("");setCourse("Mains");setPrice("");}} style={{flex:1,padding:12,borderRadius:10,borderWidth:1,borderColor:'#eee',marginRight:8}}><Text style={{textAlign:'center'}}>Reset</Text></TouchableOpacity>
-          <TouchableOpacity onPress={submit} style={{flex:1,backgroundColor:styles.primary.backgroundColor,padding:12,borderRadius:10}}><Text style={{color:'#fff',textAlign:'center'}}>Add Dish</Text></TouchableOpacity>
-        </View>
-      </View>
+        <TextInput
+          placeholder="Description (optional)"
+          value={desc}
+          onChangeText={setDesc}
+          multiline
+          style={[styles.input, {height:80, marginBottom:8}]}
+          placeholderTextColor={styles.meta.color}
+        />
 
-      <FlatList data={menu} keyExtractor={(i:any)=>i.id} contentContainerStyle={{padding:12}} renderItem={({item})=> (
-        <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',padding:12,backgroundColor:styles.card,borderRadius:8,marginBottom:8}}>
-          <View style={{flexDirection:'row',alignItems:'center'}}><View style={{width:40,height:40,borderRadius:20,backgroundColor:styles.avatar.backgroundColor,alignItems:'center',justifyContent:'center',marginRight:8}}><Text>{item.name.split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase()}</Text></View><View><Text style={{fontWeight:800}}>{item.name}</Text><Text style={{color:styles.meta}}>{item.course} • R{item.price.toFixed(2)}</Text></View></View>
-          <TouchableOpacity onPress={()=>remove(item.id)} style={{backgroundColor:styles.btn.backgroundColor,padding:8,borderRadius:8}}><Text style={{color:'#fff'}}>Remove</Text></TouchableOpacity>
+        <View style={{flexDirection:"row", marginBottom:8}}>
+          {COURSES.map(c => (
+            <TouchableOpacity
+              key={c}
+              onPress={() => setCourse(c)}
+              style={{
+                flex:1,
+                padding:10,
+                backgroundColor: course === c ? styles.primary.backgroundColor : styles.card.backgroundColor,
+                marginRight: 8,
+                borderRadius:8,
+                borderWidth: 1,
+                borderColor: course === c ? styles.primary.backgroundColor : "#eee"
+              }}
+            >
+              <Text style={{
+                textAlign:"center",
+                color: course === c ? "#fff" : styles.text,
+                fontWeight: "bold"
+              }}>{c}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      )} ListEmptyComponent={<View style={{padding:24,alignItems:'center'}}><Text style={{color:styles.meta}}>No dishes yet.</Text></View>} />
+
+        <TextInput
+          placeholder="Price (e.g. 99.99)"
+          value={price}
+          onChangeText={setPrice}
+          keyboardType="decimal-pad"
+          style={[styles.input, {marginBottom:16}]}
+          placeholderTextColor={styles.meta.color}
+        />
+
+        <TouchableOpacity
+          onPress={submit}
+          style={{
+            backgroundColor: styles.primary.backgroundColor,
+            padding: 16,
+            borderRadius: 8,
+            alignItems: "center"
+          }}
+        >
+          <Text style={{color:"#fff", fontWeight:"900", fontSize:16}}>Add Dish</Text>
+        </TouchableOpacity>
+
+        <FlatList
+          data={menu}
+          keyExtractor={i => i.id}
+          contentContainerStyle={{padding: 12}}
+          renderItem={({item}) => (
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 12,
+              backgroundColor: styles.card.backgroundColor,
+              borderRadius: 8,
+              marginBottom: 8,
+              elevation: 2
+            }}>
+              <View style={{flex: 1}}>
+                <Text style={{fontWeight: '800', color: styles.text}}>{item.name}</Text>
+                <Text style={{color: styles.meta.color}}>
+                  {item.course} • R{item.price.toFixed(2)}
+                </Text>
+                {item.description ? (
+                  <Text style={{color: styles.meta.color, fontSize: 12, marginTop: 4}}>
+                    {item.description}
+                  </Text>
+                ) : null}
+              </View>
+              <TouchableOpacity
+                onPress={() => remove(item.id)}
+                style={{
+                  backgroundColor: '#ff4444',
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                  marginLeft: 12
+                }}
+              >
+                <Text style={{color: '#fff', fontWeight: '700'}}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -196,10 +373,29 @@ export default function App(): JSX.Element {
   const persistCart = async (c: Record<string,number>) => { setCart(c); await saveCart(c); };
 
   const add = (d: Omit<Dish,"id"|"createdAt">) => persist([{...d, id:String(Date.now()), createdAt: Date.now()}, ...menu]);
-  const remove = (id:string) => {
-    const del = ()=> persist(menu.filter(m=>m.id!==id));
-    if(Platform.OS==="web" && typeof window!=="undefined"){ if(window.confirm("Delete this dish?")) del(); return; }
-    Alert.alert("Delete","Remove this dish?",[{text:"Cancel",style:"cancel"},{text:"Delete",style:"destructive",onPress:del}]);
+  const remove = (id: string) => {
+    Alert.alert(
+      "Remove Dish",
+      "Are you sure you want to remove this dish?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Remove", 
+          style: "destructive",
+          onPress: async () => {
+            const updatedMenu = menu.filter(m => m.id !== id);
+            await persist(updatedMenu);
+            
+            // Also clean up cart if item was there
+            if (cart[id]) {
+              const newCart = { ...cart };
+              delete newCart[id];
+              await persistCart(newCart);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const addToCart = async (id:string, qty=1) => {
