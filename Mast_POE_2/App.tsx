@@ -242,7 +242,8 @@ function Chef({ menu, add, remove, back, s }: { menu: Dish[]; add: (d: Omit<Dish
 
   return (
     <KeyboardAvoidingView style={s.body} behavior={Platform.OS==="ios"?"padding":undefined}>
-      <View style={s.chefTop}><TouchableOpacity onPress={back}><Text style={s.back}>← Back</Text></TouchableOpacity>
+      <View style={s.chefTop}>
+        <TouchableOpacity onPress={back}><Text style={s.back}>Back</Text></TouchableOpacity>
         <Text style={s.ctitle}>Manager — Add / Remove</Text>
         <Text style={s.csub}>Total {menu.length} • Starters {menu.filter(m=>m.course==="Starters").length}</Text>
       </View>
