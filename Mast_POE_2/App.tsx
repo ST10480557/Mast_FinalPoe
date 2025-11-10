@@ -27,11 +27,11 @@ const courseColor = (c: Course) => (c === "Starters" ? "#FFB86B" : c === "Mains"
 
 function makeStyles(THEME: { primary: string; accent: string; bg: string; card: string; text: string; muted: string; accentAlt?: string }) {
   return StyleSheet.create({
-    h:{padding:16,paddingTop:20,backgroundColor:THEME.primary,flexDirection:"row",alignItems:"center",justifyContent:"space-between"},
+    h:{padding:16,paddingTop:28,backgroundColor:THEME.primary,flexDirection:"row",alignItems:"center",justifyContent:"space-between",borderBottomLeftRadius:18,borderBottomRightRadius:18},
     hLeft:{flexDirection:"row",alignItems:"center"},
-    avatar:{width:52,height:52,borderRadius:26,backgroundColor:THEME.accentAlt || "#FFD6D6",alignItems:"center",justifyContent:"center",marginRight:12,elevation:3},
+    avatar:{width:56,height:56,borderRadius:28,backgroundColor:THEME.accentAlt || "#FFD6D6",alignItems:"center",justifyContent:"center",marginRight:12,elevation:6},
     avatarTxt:{color:THEME.primary,fontWeight:"900"},
-    ht:{color:"#fff",fontSize:20,fontWeight:"800"},
+    ht:{color:"#fff",fontSize:20,fontWeight:"900"},
     hs:{color:"#D6E4FF",marginTop:4,opacity:0.95},
     hc:{color:"#fff",marginTop:6,fontWeight:"700"},
     nav:{flexDirection:"row",borderTopWidth:1,borderTopColor:"#eee",backgroundColor:THEME.card},
@@ -39,60 +39,63 @@ function makeStyles(THEME: { primary: string; accent: string; bg: string; card: 
     ta:{backgroundColor:THEME.accentAlt || "#F0F6FF"},
     tt:{color:THEME.muted,fontWeight:"800"},
     tta:{color:THEME.primary},
-    body:{flex:1,backgroundColor:THEME.bg},
+    body:{flex:1,backgroundColor:THEME.bg,paddingBottom:18},
     controls:{padding:14},
     filters:{flexDirection:"row",marginBottom:10},
-    pill:{paddingVertical:7,paddingHorizontal:12,borderRadius:20,backgroundColor:THEME.card,marginRight:8,borderWidth:1,borderColor:"#eee"},
-    pilla:{borderColor:THEME.primary},
+    pill:{paddingVertical:8,paddingHorizontal:14,borderRadius:22,backgroundColor:THEME.card,marginRight:8,borderWidth:1,borderColor:"#eee"},
+    pilla:{borderColor:THEME.primary, shadowColor: THEME.primary, shadowOpacity: 0.12, shadowOffset:{width:0,height:6}, shadowRadius:8, elevation:3},
     pt:{color:THEME.muted,fontWeight:"700"},
     pta:{color:THEME.primary},
     search:{flexDirection:"row",alignItems:"center",marginTop:4},
-    input:{flex:1,backgroundColor:THEME.card,borderRadius:10,padding:12,borderWidth:1,borderColor:"#eee",color:THEME.text},
-    mbtn:{marginLeft:8,backgroundColor:THEME.accent,paddingVertical:10,paddingHorizontal:14,borderRadius:10},
+    input:{flex:1,backgroundColor:THEME.card,borderRadius:12,padding:12,borderWidth:0,color:THEME.text},
+    mbtn:{marginLeft:8,backgroundColor:THEME.accent,paddingVertical:10,paddingHorizontal:14,borderRadius:12,elevation:3},
     mbtxt:{color:"#fff",fontWeight:"800"},
     rowWrap:{justifyContent:"space-between"},
-    card:{flex:1,backgroundColor:THEME.card,borderRadius:12,padding:12,marginBottom:12,marginHorizontal:6,minWidth:150,maxWidth:"48%",overflow:"hidden"},
-    cardShadow:{ shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 6 },
+    card:{flex:1,backgroundColor:THEME.card,borderRadius:14,padding:14,marginBottom:14,marginHorizontal:6,minWidth:150,maxWidth:"48%",overflow:"hidden"},
+    cardShadow:{ shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 14, elevation: 8 },
     strip:{height:6,borderRadius:4,marginBottom:8},
-    ct:{fontWeight:"800",color:THEME.text,fontSize:16},
+    ct:{fontWeight:"900",color:THEME.text,fontSize:16},
     cc:{color:THEME.muted,fontSize:12,marginTop:6},
     cd:{color:THEME.muted,fontSize:13,marginTop:8,minHeight:36},
     cf:{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:10},
     cp:{fontWeight:"900",color:THEME.text},
     row:{flexDirection:"row",alignItems:"center"},
-    q:{padding:6,borderRadius:6,backgroundColor:THEME.bg,marginHorizontal:6,borderWidth:1,borderColor:"#eee"},
+    q:{padding:6,borderRadius:8,backgroundColor:THEME.bg,marginHorizontal:6,borderWidth:1,borderColor:"#eee"},
     qt:{fontWeight:"900",color:THEME.text},
     rm:{marginLeft:8,paddingVertical:6,paddingHorizontal:8,borderRadius:8,backgroundColor:"#FDE8E8"},
     rmt:{color:"#D04545",fontWeight:"800"},
-    cart:{position:"absolute",left:12,right:12,bottom:12,backgroundColor:THEME.card,borderRadius:12,padding:12,flexDirection:"row",justifyContent:"space-between",alignItems:"center",elevation:3, ...Platform.select({ios:{shadowColor:'#000',shadowOffset:{width:0,height:4},shadowOpacity:0.06,shadowRadius:8}})},
-    cartTxt:{color:THEME.text,fontWeight:"700"},
-    primary:{backgroundColor:THEME.primary,paddingVertical:8,paddingHorizontal:12,borderRadius:8},
-    pTxt:{color:"#fff",fontWeight:"800"},
+    cart:{position:"absolute",left:12,right:12,bottom:12,backgroundColor:THEME.card,borderRadius:14,padding:12,flexDirection:"row",justifyContent:"space-between",alignItems:"center",elevation:6,shadowColor:'#000',shadowOffset:{width:0,height:8},shadowOpacity:0.06,shadowRadius:12},
+    cartTxt:{color:THEME.text,fontWeight:"800"},
+    primary:{backgroundColor:THEME.primary,paddingVertical:8,paddingHorizontal:12,borderRadius:12},
+    pTxt:{color:"#fff",fontWeight:"900"},
     empty:{padding:24,alignItems:"center"},
     emptyTxt:{color:THEME.muted},
-    chefTop:{padding:12,backgroundColor:THEME.card,borderBottomWidth:1,borderBottomColor:"#eee"},
+    chefTop:{padding:14,backgroundColor:THEME.card,borderBottomWidth:1,borderBottomColor:"#eee"},
     back:{color:THEME.primary,fontWeight:"800",marginBottom:6},
     ctitle:{fontSize:18,fontWeight:"900",color:THEME.text},
     csub:{color:THEME.muted,marginTop:4},
     form:{padding:12,backgroundColor:THEME.card,marginTop:8},
     courseRow:{flexDirection:"row",marginTop:8},
-    courseOpt:{flex:1,paddingVertical:10,alignItems:"center",borderRadius:8,borderWidth:1,borderColor:"#eee",backgroundColor:THEME.card,marginRight:8},
-    courseOptA:{backgroundColor:THEME.primary},
+    courseOpt:{flex:1,paddingVertical:12,alignItems:"center",borderRadius:10,borderWidth:1,borderColor:"#eee",backgroundColor:THEME.card,marginRight:8},
+    courseOptA:{backgroundColor:THEME.primary, shadowColor: THEME.primary, shadowOpacity: 0.12, shadowOffset:{width:0,height:6}, shadowRadius:8, elevation:3},
     courseTxt:{color:THEME.text,fontWeight:"700"},
     courseTxtA:{color:"#fff"},
     formActions:{flexDirection:"row",marginTop:12},
-    ghost:{flex:1,borderWidth:1,borderColor:"#eee",padding:12,borderRadius:8,alignItems:"center",marginRight:8},
+    ghost:{flex:1,borderWidth:1,borderColor:"#eee",padding:12,borderRadius:10,alignItems:"center",marginRight:8},
     ghostTxt:{fontWeight:"800",color:THEME.muted},
-    add:{flex:1,backgroundColor:THEME.primary,padding:12,borderRadius:8,alignItems:"center"},
+    add:{flex:1,backgroundColor:THEME.primary,padding:12,borderRadius:10,alignItems:"center"},
     addTxt:{color:"#fff",fontWeight:"900"},
-    list:{flexDirection:"row",justifyContent:"space-between",alignItems:"center",padding:12,backgroundColor:THEME.card,marginBottom:8,borderRadius:8},
+    addSmall:{backgroundColor:THEME.accent,paddingVertical:6,paddingHorizontal:10,borderRadius:10},
+    priceBadge:{position:'absolute',right:10,top:8,backgroundColor:THEME.primary,paddingVertical:6,paddingHorizontal:8,borderRadius:10,elevation:4},
+    priceBadgeTxt:{color:'#fff',fontWeight:'900'},
+    list:{flexDirection:"row",justifyContent:"space-between",alignItems:"center",padding:12,backgroundColor:THEME.card,marginBottom:8,borderRadius:10},
     lt:{fontWeight:"800",color:THEME.text},
     lm:{color:THEME.muted,marginTop:4},
     rmBtn:{paddingVertical:8,paddingHorizontal:12,borderRadius:8,backgroundColor:THEME.accent},
     rmBtnTxt:{color:"#fff",fontWeight:"800"},
     themeSw:{position:"absolute",right:12,top:12,flexDirection:"row",alignItems:"center",padding:6,borderRadius:20,backgroundColor:THEME.card,borderWidth:1,borderColor:"#eee"},
-    avatarSmall:{width:36,height:36,borderRadius:18,backgroundColor:THEME.accentAlt||"#FFD6D6",alignItems:"center",justifyContent:"center",marginRight:8},
-    avatarSmallTxt:{color:THEME.primary,fontWeight:"800"},
+    avatarSmall:{width:40,height:40,borderRadius:20,backgroundColor:THEME.accentAlt||"#FFD6D6",alignItems:"center",justifyContent:"center",marginRight:8},
+    avatarSmallTxt:{color:THEME.primary,fontWeight:"900"},
     headerActions:{flexDirection:'row',alignItems:'center'}
   });
 }
@@ -139,12 +142,15 @@ const Card = ({ item, onQty, onRemove, onAdd, s }: { item: Dish; onQty?: (id: st
   return (
     <Animated.View style={[s.card, s.cardShadow, { opacity: anim, transform: [{ scale: anim.interpolate({ inputRange: [0,1], outputRange: [0.98,1] }) }] }]}>
       <View style={[s.strip, { backgroundColor: courseColor(item.course) }]} />
-      <View style={{flexDirection:"row",alignItems:"center"}}>
-        <View style={s.avatarSmall}><Text style={s.avatarSmallTxt}>{initials}</Text></View>
-        <View style={{flex:1}}>
-          <Text style={s.ct}>{item.name}</Text>
-          <Text style={s.cc}>{item.course}</Text>
+      <View style={{position:'relative'}}>
+        <View style={{flexDirection:"row",alignItems:"center"}}>
+          <View style={s.avatarSmall}><Text style={s.avatarSmallTxt}>{initials}</Text></View>
+          <View style={{flex:1}}>
+            <Text style={s.ct}>{item.name}</Text>
+            <Text style={s.cc}>{item.course}</Text>
+          </View>
         </View>
+        <View style={s.priceBadge}><Text style={s.priceBadgeTxt}>R{item.price.toFixed(0)}</Text></View>
       </View>
       {item.description ? <Text style={s.cd}>{item.description}</Text> : null}
       <View style={s.cf}>
@@ -154,7 +160,7 @@ const Card = ({ item, onQty, onRemove, onAdd, s }: { item: Dish; onQty?: (id: st
             <TouchableOpacity onPress={() => onQty(item.id, -1)} style={s.q}><Text style={s.qt}>−</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => onQty(item.id, +1)} style={s.q}><Text style={s.qt}>+</Text></TouchableOpacity>
           </> : null}
-          {onAdd ? <TouchableOpacity onPress={() => onAdd(item.id)} style={[s.add,{paddingVertical:6,paddingHorizontal:10,marginLeft:8}]}><Text style={s.addTxt}>Add</Text></TouchableOpacity> : null}
+          {onAdd ? <TouchableOpacity onPress={() => onAdd(item.id)} style={[s.addSmall,{marginLeft:8}]}><Text style={s.addTxt}>Add</Text></TouchableOpacity> : null}
           {onRemove ? <TouchableOpacity onPress={() => onRemove(item.id)} style={s.rm}><Text style={s.rmt}>Remove</Text></TouchableOpacity> : null}
         </View>
       </View>
@@ -172,6 +178,28 @@ function Customer({ menu, openManager, s, cart, addToCart }: { menu: Dish[]; ope
     return items;
   }, [menu, filter, q]);
 
+  // --- new: compute average prices per course + overall average
+  const averages = useMemo(() => {
+    type Acc = { avg: number; count: number; sum: number };
+    const result: Record<Course, Acc> = {
+      Starters: { avg: 0, count: 0, sum: 0 },
+      Mains: { avg: 0, count: 0, sum: 0 },
+      Desserts: { avg: 0, count: 0, sum: 0 },
+    };
+    let totalSum = 0;
+    let totalCount = 0;
+    for (const c of COURSES) {
+      const items = menu.filter(m => m.course === c);
+      const count = items.length;
+      const sum = items.reduce((acc, it) => acc + it.price, 0);
+      result[c] = { avg: count ? sum / count : 0, count, sum };
+      totalSum += sum;
+      totalCount += count;
+    }
+    return { perCourse: result, overallAvg: totalCount ? totalSum / totalCount : 0, totalCount };
+  }, [menu]);
+  // --- end new
+
   return (
     <View style={s.body}>
       <View style={s.controls}>
@@ -183,6 +211,21 @@ function Customer({ menu, openManager, s, cart, addToCart }: { menu: Dish[]; ope
           <TextInput placeholder="Search dishes or description..." placeholderTextColor={s.input.color ? undefined : undefined} value={q} onChangeText={setQ} style={s.input} />
           <TouchableOpacity onPress={openManager} style={s.mbtn}><Text style={s.mbtxt}>Manager</Text></TouchableOpacity>
         </View>
+
+        {/* new: averages summary row */}
+        <View style={{flexDirection:'row',marginTop:12,justifyContent:'space-between',alignItems:'center'}}>
+          {COURSES.map((c, idx) => {
+            const info = averages.perCourse[c];
+            return (
+              <View key={c} style={{flex:1,backgroundColor:s.card,borderRadius:10,padding:8,marginRight: idx < COURSES.length - 1 ? 8 : 0,alignItems:'center'}}>
+                <Text style={{fontWeight:800,color:typeof s.ct === 'object' ? undefined : undefined}}>{c}</Text>
+                <Text style={{color:s.cc.color ? undefined : undefined, marginTop:4, fontWeight:'700'}}>{info.count ? `R${info.avg.toFixed(2)}` : "—"}</Text>
+                <Text style={{color:s.cc.color ? undefined : undefined, fontSize:11, marginTop:4}}>{info.count} items</Text>
+              </View>
+            );
+          })}
+        </View>
+
       </View>
 
       <FlatList data={visible} keyExtractor={i=>i.id} numColumns={2} columnWrapperStyle={s.rowWrap}
@@ -230,6 +273,9 @@ export default function App(): JSX.Element {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
 
+  // footer pulse animation for visual feedback when cart updates
+  const cartPulse = useRef(new Animated.Value(1)).current;
+
   useEffect(()=>{ (async()=>{ const m = await load(); const c = await loadCart(); setMenu(m); setCart(c); })(); },[]);
 
   const persist = async (items: Dish[])=>{ setMenu(items); await save(items); };
@@ -247,6 +293,11 @@ export default function App(): JSX.Element {
     const next = { ...cart, [id]: Math.max(0, (cart[id]||0) + qty) };
     if (next[id] === 0) delete next[id];
     await persistCart(next);
+    // pulse footer briefly
+    Animated.sequence([
+      Animated.timing(cartPulse, { toValue: 1.06, duration: 140, useNativeDriver: true }),
+      Animated.timing(cartPulse, { toValue: 1, duration: 220, useNativeDriver: true })
+    ]).start();
   };
   const updateCartQty = async (id: string, qty: number) => {
     const next = { ...cart };
@@ -287,13 +338,16 @@ export default function App(): JSX.Element {
 
       {/* Footer cart preview */}
       {screen === "customer" && (
-        <View style={[s.cart, { bottom: 74 }]}>
-          <Text style={s.cartTxt}>{totalItems} items • R{totalPrice.toFixed(2)}</Text>
-          <View style={{flexDirection:'row',alignItems:'center'}}>
-            <TouchableOpacity style={[s.primary,{paddingVertical:8,paddingHorizontal:14,borderRadius:8,marginRight:8}]} onPress={()=>setCartOpen(true)}><Text style={s.pTxt}>Open Cart</Text></TouchableOpacity>
-            <TouchableOpacity onPress={clearCart} style={{paddingVertical:8,paddingHorizontal:12,borderRadius:8,backgroundColor:'#F3F4F6'}}><Text style={{fontWeight:'800'}}>Clear</Text></TouchableOpacity>
+        <Animated.View style={[s.cart, { bottom: 74, transform:[{ scale: cartPulse }] }]}>
+          <View>
+            <Text style={s.cartTxt}>{totalItems} items</Text>
+            <Text style={{color:currentTheme.muted,fontSize:12}}>R{totalPrice.toFixed(2)}</Text>
           </View>
-        </View>
+          <View style={{flexDirection:'row',alignItems:'center'}}>
+            <TouchableOpacity style={[s.primary,{paddingVertical:8,paddingHorizontal:14,borderRadius:10,marginRight:8}]} onPress={()=>setCartOpen(true)}><Text style={s.pTxt}>Cart</Text></TouchableOpacity>
+            <TouchableOpacity onPress={clearCart} style={{paddingVertical:8,paddingHorizontal:12,borderRadius:10,backgroundColor:'#F3F4F6'}}><Text style={{fontWeight:'800'}}>Clear</Text></TouchableOpacity>
+          </View>
+        </Animated.View>
       )}
 
        <Nav screen={screen} setScreen={setScreen} s={s} />
