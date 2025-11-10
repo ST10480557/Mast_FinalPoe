@@ -1,7 +1,8 @@
 import React, { JSX, useEffect, useMemo, useState, useRef, useEffect as useEff } from "react";
 import {
   SafeAreaView, View, Text, TextInput, TouchableOpacity, FlatList,
-  StyleSheet, Alert, KeyboardAvoidingView, Platform, StatusBar, Animated
+  StyleSheet, Alert, KeyboardAvoidingView, Platform, StatusBar, Animated,
+  Modal, Pressable, ScrollView
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -9,6 +10,7 @@ type Course = "Starters" | "Mains" | "Desserts";
 type Dish = { id: string; name: string; description?: string; course: Course; price: number; createdAt: number; };
 
 const STORAGE_KEY = "@chef_menu_items_v2";
+const CART_KEY = "@chef_menu_cart_v1";
 const COURSES: Course[] = ["Starters", "Mains", "Desserts"];
 
 const THEMES: Record<string, { primary: string; accent: string; bg: string; card: string; text: string; muted: string; accentAlt?: string }> = {
@@ -18,6 +20,9 @@ const THEMES: Record<string, { primary: string; accent: string; bg: string; card
 
 const load = async () => { try { const r = await AsyncStorage.getItem(STORAGE_KEY); return r ? (JSON.parse(r) as Dish[]) : []; } catch { return []; } };
 const save = async (items: Dish[]) => { try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch {} };
+const loadCart = async () => { try { const r = await AsyncStorage.getItem(CART_KEY); return r ? (JSON.parse(r) as Record<string, number>) : {}; } catch { return {}; } };
+const saveCart = async (cart: Record<string, number>) => { try { await AsyncStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch {} };
+
 const courseColor = (c: Course) => (c === "Starters" ? "#FFB86B" : c === "Mains" ? "#6BB0FF" : "#FF8ACB");
 
 function makeStyles(THEME: { primary: string; accent: string; bg: string; card: string; text: string; muted: string; accentAlt?: string }) {
@@ -87,11 +92,12 @@ function makeStyles(THEME: { primary: string; accent: string; bg: string; card: 
     rmBtnTxt:{color:"#fff",fontWeight:"800"},
     themeSw:{position:"absolute",right:12,top:12,flexDirection:"row",alignItems:"center",padding:6,borderRadius:20,backgroundColor:THEME.card,borderWidth:1,borderColor:"#eee"},
     avatarSmall:{width:36,height:36,borderRadius:18,backgroundColor:THEME.accentAlt||"#FFD6D6",alignItems:"center",justifyContent:"center",marginRight:8},
-    avatarSmallTxt:{color:THEME.primary,fontWeight:"800"}
+    avatarSmallTxt:{color:THEME.primary,fontWeight:"800"},
+    headerActions:{flexDirection:'row',alignItems:'center'}
   });
 }
 
-function Header({ title, sub, count, s, themeName, cycleTheme }: { title: string; sub?: string; count?: number; s: any; themeName: string; cycleTheme: ()=>void }) {
+function Header({ title, sub, count, s, themeName, cycleTheme, cartCount, openCart }: { title: string; sub?: string; count?: number; s: any; themeName: string; cycleTheme: ()=>void; cartCount?: number; openCart?: ()=>void }) {
   return (
     <View style={s.h}>
       <View style={s.hLeft}>
@@ -102,7 +108,17 @@ function Header({ title, sub, count, s, themeName, cycleTheme }: { title: string
           {typeof count === "number" ? <Text style={s.hc}>{count} dishes</Text> : null}
         </View>
       </View>
-      <TouchableOpacity onPress={cycleTheme} style={s.themeSw}><Text style={{color:'#555',fontWeight:'700'}}>{themeName}</Text></TouchableOpacity>
+
+      <View style={s.headerActions}>
+        {typeof cartCount === "number" && openCart ? (
+          <TouchableOpacity onPress={openCart} style={{marginRight:10,alignItems:'center'}}>
+            <View style={{backgroundColor:'#fff',padding:6,borderRadius:18}}>
+              <Text style={{fontWeight:'800',color:'#333'}}>{cartCount}</Text>
+            </View>
+          </TouchableOpacity>
+        ) : null}
+        <TouchableOpacity onPress={cycleTheme} style={s.themeSw}><Text style={{color:'#555',fontWeight:'700'}}>{themeName}</Text></TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -116,7 +132,7 @@ function Nav({ screen, setScreen, s }: { screen: "customer" | "chef"; setScreen:
   );
 }
 
-const Card = ({ item, onQty, onRemove, s }: { item: Dish; onQty?: (id: string, d: number) => void; onRemove?: (id: string) => void; s: any }) => {
+const Card = ({ item, onQty, onRemove, onAdd, s }: { item: Dish; onQty?: (id: string, d: number) => void; onRemove?: (id: string) => void; onAdd?: (id: string)=>void; s: any }) => {
   const anim = useRef(new Animated.Value(0)).current;
   useEff(()=> { Animated.timing(anim, { toValue: 1, duration: 320, useNativeDriver: true }).start(); }, []);
   const initials = item.name.split(" ").map(p=>p[0]).slice(0,2).join("").toUpperCase();
@@ -138,6 +154,7 @@ const Card = ({ item, onQty, onRemove, s }: { item: Dish; onQty?: (id: string, d
             <TouchableOpacity onPress={() => onQty(item.id, -1)} style={s.q}><Text style={s.qt}>−</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => onQty(item.id, +1)} style={s.q}><Text style={s.qt}>+</Text></TouchableOpacity>
           </> : null}
+          {onAdd ? <TouchableOpacity onPress={() => onAdd(item.id)} style={[s.add,{paddingVertical:6,paddingHorizontal:10,marginLeft:8}]}><Text style={s.addTxt}>Add</Text></TouchableOpacity> : null}
           {onRemove ? <TouchableOpacity onPress={() => onRemove(item.id)} style={s.rm}><Text style={s.rmt}>Remove</Text></TouchableOpacity> : null}
         </View>
       </View>
@@ -145,19 +162,15 @@ const Card = ({ item, onQty, onRemove, s }: { item: Dish; onQty?: (id: string, d
   );
 };
 
-function Customer({ menu, openManager, s }: { menu: Dish[]; openManager: () => void; s: any }) {
+function Customer({ menu, openManager, s, cart, addToCart }: { menu: Dish[]; openManager: () => void; s: any; cart?: Record<string,number>; addToCart?: (id:string, qty?:number)=>void }) {
   const [filter, setFilter] = useState<"All" | Course>("All");
   const [q, setQ] = useState("");
-  const [cart, setCart] = useState<Record<string, number>>({});
+
   const visible = useMemo(() => {
     let items = filter === "All" ? menu : menu.filter(m => m.course === filter);
     if (q.trim()) { const Q = q.toLowerCase(); items = items.filter(i => i.name.toLowerCase().includes(Q) || (i.description || "").toLowerCase().includes(Q)); }
     return items;
   }, [menu, filter, q]);
-
-  const changeQty = (id: string, d: number) => setCart(s => { const c = { ...s }; const n = Math.max(0, (c[id]||0)+d); if (n) c[id]=n; else delete c[id]; return c; });
-  const totalItems = Object.values(cart).reduce((a,b)=>a+b,0);
-  const totalPrice = menu.reduce((sum,m)=> sum + (cart[m.id]||0)*m.price, 0);
 
   return (
     <View style={s.body}>
@@ -173,12 +186,9 @@ function Customer({ menu, openManager, s }: { menu: Dish[]; openManager: () => v
       </View>
 
       <FlatList data={visible} keyExtractor={i=>i.id} numColumns={2} columnWrapperStyle={s.rowWrap}
-        renderItem={({item})=> <Card item={item} onQty={changeQty} s={s} />} ListEmptyComponent={<View style={s.empty}><Text style={s.emptyTxt}>No dishes.</Text></View>} />
+        renderItem={({item})=> <Card item={item} s={s} onAdd={addToCart} />} ListEmptyComponent={<View style={s.empty}><Text style={s.emptyTxt}>No dishes.</Text></View>} />
 
-      <View style={s.cart}>
-        <Text style={s.cartTxt}>{totalItems} items • R{totalPrice.toFixed(2)}</Text>
-        <TouchableOpacity style={[s.primary,{paddingVertical:8,paddingHorizontal:14,borderRadius:8}]}><Text style={s.pTxt}>Checkout</Text></TouchableOpacity>
-      </View>
+      {/* cart UI removed from here — cart handled at app level/modal */}
     </View>
   );
 }
@@ -216,8 +226,14 @@ export default function App(): JSX.Element {
   const [screen, setScreen] = useState<"customer" | "chef">("customer");
   const [themeName, setThemeName] = useState<keyof typeof THEMES>("Light");
 
-  useEffect(()=>{ (async()=>{ const m = await load(); setMenu(m); })(); },[]);
+  // cart state (persistent)
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [cartOpen, setCartOpen] = useState(false);
+
+  useEffect(()=>{ (async()=>{ const m = await load(); const c = await loadCart(); setMenu(m); setCart(c); })(); },[]);
+
   const persist = async (items: Dish[])=>{ setMenu(items); await save(items); };
+  const persistCart = async (c: Record<string, number>) => { setCart(c); await saveCart(c); };
 
   const add = (d: Omit<Dish,"id"|"createdAt">)=> persist([{ ...d, id: String(Date.now()), createdAt: Date.now() }, ...menu]);
   const remove = (id: string)=> {
@@ -225,6 +241,23 @@ export default function App(): JSX.Element {
     if (Platform.OS==="web" && typeof window!=="undefined") { if (window.confirm("Delete this dish?")) del(); return; }
     Alert.alert("Delete","Remove this dish?",[{text:"Cancel",style:"cancel"},{text:"Delete",style:"destructive",onPress:del}]);
   };
+
+  // cart handlers (no checkout)
+  const addToCart = async (id: string, qty = 1) => {
+    const next = { ...cart, [id]: Math.max(0, (cart[id]||0) + qty) };
+    if (next[id] === 0) delete next[id];
+    await persistCart(next);
+  };
+  const updateCartQty = async (id: string, qty: number) => {
+    const next = { ...cart };
+    if (qty <= 0) delete next[id];
+    else next[id] = qty;
+    await persistCart(next);
+  };
+  const removeFromCart = async (id: string) => {
+    const next = { ...cart }; delete next[id]; await persistCart(next);
+  };
+  const clearCart = async () => { await persistCart({}); };
 
   const cycleTheme = () => {
     const keys = Object.keys(THEMES);
@@ -236,12 +269,63 @@ export default function App(): JSX.Element {
   const currentTheme = useMemo(()=> THEMES[themeName], [themeName]);
   const s = useMemo(()=> makeStyles(currentTheme), [currentTheme]);
 
+  // derived cart totals
+  const cartItems = menu.filter(m=>cart[m.id]);
+  const totalItems = Object.values(cart).reduce((a,b)=>a+b,0);
+  const totalPrice = cartItems.reduce((sum,m)=> sum + (cart[m.id]||0)*m.price, 0);
+
   return (
     <SafeAreaView style={{flex:1,backgroundColor:currentTheme.bg}}>
       <StatusBar backgroundColor={currentTheme.primary} barStyle={themeName === "Dark" ? "light-content" : "dark-content"} />
-      <Header title="Chef Christoffel" sub="Fresh menu — always up to date" count={menu.length} s={s} themeName={themeName} cycleTheme={cycleTheme} />
-      <View style={{flex:1}}>{screen==="customer" ? <Customer menu={menu} openManager={()=>setScreen("chef")} s={s} /> : <Chef menu={menu} add={add} remove={remove} back={()=>setScreen("customer")} s={s} />}</View>
+      <Header title="Chef Christoffel" sub="Fresh menu — always up to date" count={menu.length} s={s} themeName={themeName} cycleTheme={cycleTheme} cartCount={totalItems} openCart={()=>setCartOpen(true)} />
+      <View style={{flex:1}}>
+        {screen==="customer"
+          ? <Customer menu={menu} openManager={()=>setScreen("chef")} s={s} cart={cart} addToCart={addToCart} />
+          : <Chef menu={menu} add={add} remove={remove} back={()=>setScreen("customer")} s={s} />
+        }
+      </View>
+
       <Nav screen={screen} setScreen={setScreen} s={s} />
+
+      {/* Cart modal (no checkout) */}
+      <Modal visible={cartOpen} animationType="slide" transparent={true} onRequestClose={()=>setCartOpen(false)}>
+        <Pressable style={{flex:1,backgroundColor:'rgba(0,0,0,0.35)'}} onPress={()=>setCartOpen(false)}>
+          <View style={{flex:1,justifyContent:'flex-end'}}>
+            <View style={{maxHeight:'70%',backgroundColor:currentTheme.card,borderTopLeftRadius:16,borderTopRightRadius:16,padding:12}}>
+              <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <Text style={{fontWeight:'900',color:currentTheme.text}}>Your Cart ({totalItems})</Text>
+                <TouchableOpacity onPress={()=>setCartOpen(false)}><Text style={{color:currentTheme.muted,fontWeight:'800'}}>Close</Text></TouchableOpacity>
+              </View>
+              <ScrollView style={{marginBottom:8}}>
+                {cartItems.length === 0 ? <View style={{padding:24,alignItems:'center'}}><Text style={{color:currentTheme.muted}}>Cart is empty</Text></View> : null}
+                {cartItems.map(it=>(
+                  <View key={it.id} style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingVertical:8,borderBottomWidth:1,borderBottomColor:'#eee'}}>
+                    <View style={{flex:1}}>
+                      <Text style={{fontWeight:'800',color:currentTheme.text}}>{it.name}</Text>
+                      <Text style={{color:currentTheme.muted}}>R{it.price.toFixed(2)} • {it.course}</Text>
+                    </View>
+                    <View style={{flexDirection:'row',alignItems:'center'}}>
+                      <TouchableOpacity onPress={()=>updateCartQty(it.id, Math.max(0,(cart[it.id]||0)-1))} style={{padding:8,marginRight:6,backgroundColor:currentTheme.bg,borderRadius:8}}><Text>-</Text></TouchableOpacity>
+                      <Text style={{width:28,textAlign:'center',fontWeight:'800'}}>{cart[it.id]}</Text>
+                      <TouchableOpacity onPress={()=>updateCartQty(it.id, (cart[it.id]||0)+1)} style={{padding:8,marginLeft:6,backgroundColor:currentTheme.bg,borderRadius:8}}><Text>+</Text></TouchableOpacity>
+                      <TouchableOpacity onPress={()=>removeFromCart(it.id)} style={{padding:8,marginLeft:10,backgroundColor:'#FDE8E8',borderRadius:8}}><Text style={{color:'#D04545',fontWeight:'800'}}>Remove</Text></TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+              <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:8}}>
+                <Text style={{fontWeight:'900',color:currentTheme.text}}>Total: R{totalPrice.toFixed(2)}</Text>
+                <View style={{flexDirection:'row',alignItems:'center'}}>
+                  <TouchableOpacity onPress={clearCart} style={{marginRight:8,paddingVertical:8,paddingHorizontal:12,borderRadius:8,backgroundColor:'#F3F4F6'}}><Text style={{fontWeight:'800'}}>Clear</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={()=>setCartOpen(false)} style={{paddingVertical:8,paddingHorizontal:14,borderRadius:8,backgroundColor:currentTheme.primary}}><Text style={{color:'#fff',fontWeight:'900'}}>Done</Text></TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* sticky cart preview removed (header cart used) */}
     </SafeAreaView>
   );
 }
