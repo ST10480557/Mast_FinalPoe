@@ -126,7 +126,7 @@ function Header({ title, sub, count, s, themeName, cycleTheme, cartCount, openCa
   );
 }
 
-function Nav({ screen, setScreen, s }: { screen: "customer" | "chef"; setScreen: (s: any) => void; s: any }) {
+function Nav({ screen, setScreen, s }: { screen: "customer" | "chef" | "filter"; setScreen: (s: "customer" | "chef" | "filter") => void; s: any }) {
   return (
     <View style={s.nav}>
       <TouchableOpacity style={[s.tab, screen === "customer" && s.ta]} onPress={() => setScreen("customer")}><Text style={[s.tt, screen === "customer" && s.tta]}>Customer</Text></TouchableOpacity>
@@ -168,8 +168,7 @@ const Card = ({ item, onQty, onRemove, onAdd, s }: { item: Dish; onQty?: (id: st
   );
 };
 
-function Customer({ menu, openManager, s, cart, addToCart }: { menu: Dish[]; openManager: () => void; s: any; cart?: Record<string,number>; addToCart?: (id:string, qty?:number)=>void }) {
-  const [filter, setFilter] = useState<"All" | Course>("All");
+function Customer({ menu, openManager, s, cart, addToCart, filter, openFilter }: { menu: Dish[]; openManager: () => void; s: any; cart?: Record<string,number>; addToCart?: (id:string, qty?:number)=>void; filter: "All" | Course; openFilter: ()=>void }) {
   const [q, setQ] = useState("");
 
   const visible = useMemo(() => {
@@ -178,7 +177,7 @@ function Customer({ menu, openManager, s, cart, addToCart }: { menu: Dish[]; ope
     return items;
   }, [menu, filter, q]);
 
-  // --- new: compute average prices per course + overall average
+  // --- averages unchanged
   const averages = useMemo(() => {
     type Acc = { avg: number; count: number; sum: number };
     const result: Record<Course, Acc> = {
@@ -198,18 +197,17 @@ function Customer({ menu, openManager, s, cart, addToCart }: { menu: Dish[]; ope
     }
     return { perCourse: result, overallAvg: totalCount ? totalSum / totalCount : 0, totalCount };
   }, [menu]);
-  // --- end new
 
   return (
     <View style={s.body}>
       <View style={s.controls}>
-        <View style={s.filters}>
-          <TouchableOpacity onPress={() => setFilter("All")} style={[s.pill, filter==="All"&&s.pilla]}><Text style={[s.pt, filter==="All"&&s.pta]}>All</Text></TouchableOpacity>
-          {COURSES.map(c=> <TouchableOpacity key={c} onPress={()=>setFilter(c)} style={[s.pill, filter===c&&s.pilla]}><Text style={[s.pt, filter===c&&s.pta]}>{c}</Text></TouchableOpacity>)}
+        {/* Filter moved to separate screen */}
+        <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+          <TouchableOpacity onPress={openFilter} style={[s.pill]}><Text style={[s.pt]}>Filters: {filter}</Text></TouchableOpacity>
+          <TouchableOpacity onPress={openManager} style={s.mbtn}><Text style={s.mbtxt}>Manager</Text></TouchableOpacity>
         </View>
         <View style={s.search}>
           <TextInput placeholder="Search dishes or description..." placeholderTextColor={s.input.color ? undefined : undefined} value={q} onChangeText={setQ} style={s.input} />
-          <TouchableOpacity onPress={openManager} style={s.mbtn}><Text style={s.mbtxt}>Manager</Text></TouchableOpacity>
         </View>
 
         {/* new: averages summary row */}
@@ -265,9 +263,35 @@ function Chef({ menu, add, remove, back, s }: { menu: Dish[]; add: (d: Omit<Dish
   );
 }
 
+// new: Filter screen component
+function FilterScreen({ current, setCurrent, back, s }: { current: "All" | Course; setCurrent: (v: "All" | Course) => void; back: ()=>void; s: any }) {
+  return (
+    <View style={[s.body, {padding:16}]}>
+
+      <View style={s.chefTop}>
+        <TouchableOpacity onPress={back}><Text style={s.back}>Back</Text></TouchableOpacity>
+        <Text style={s.ctitle}>Filters</Text>
+        <Text style={s.csub}>Select course filter</Text>
+      </View>
+
+      <View style={{padding:12}}>
+        <TouchableOpacity onPress={() => setCurrent("All")} style={[s.pill, current === "All" && s.pilla, {marginBottom:8}]}><Text style={[s.pt, current==="All"&&s.pta]}>All</Text></TouchableOpacity>
+        {COURSES.map(c => (
+          <TouchableOpacity key={c} onPress={() => setCurrent(c)} style={[s.pill, current === c && s.pilla, {marginBottom:8}]}><Text style={[s.pt, current===c&&s.pta]}>{c}</Text></TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={{marginTop:12}}>
+        <TouchableOpacity onPress={back} style={[s.add,{padding:12}]}><Text style={s.addTxt}>Apply</Text></TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
 export default function App(): JSX.Element {
   const [menu, setMenu] = useState<Dish[]>([]);
-  const [screen, setScreen] = useState<"customer" | "chef">("customer");
+  const [screen, setScreen] = useState<"customer" | "chef" | "filter">("customer");
+  const [filter, setFilter] = useState<"All" | Course>("All");
   const [themeName, setThemeName] = useState<keyof typeof THEMES>("Light");
 
   // cart state (persistent)
@@ -331,10 +355,26 @@ export default function App(): JSX.Element {
       <StatusBar backgroundColor={currentTheme.primary} barStyle={themeName === "Dark" ? "light-content" : "dark-content"} />
       <Header title="Chef Christoffel" sub="Fresh menu — always up to date" count={menu.length} s={s} themeName={themeName} cycleTheme={cycleTheme} />
        <View style={{flex:1}}>
-         {screen==="customer"
-           ? <Customer menu={menu} openManager={()=>setScreen("chef")} s={s} cart={cart} addToCart={addToCart} />
-           : <Chef menu={menu} add={add} remove={remove} back={()=>setScreen("customer")} s={s} />
-         }
+         {screen === "customer" ? (
+           <Customer
+             menu={menu}
+             openManager={() => setScreen("chef")}
+             s={s}
+             cart={cart}
+             addToCart={addToCart}
+             filter={filter}
+             openFilter={() => setScreen("filter")}
+           />
+         ) : screen === "filter" ? (
+           <FilterScreen
+             current={filter}
+             setCurrent={(v) => { setFilter(v); setScreen("customer"); }}
+             back={() => setScreen("customer")}
+             s={s}
+           />
+         ) : (
+           <Chef menu={menu} add={add} remove={remove} back={()=>setScreen("customer")} s={s} />
+         )}
        </View>
 
       {/* Footer cart preview */}
