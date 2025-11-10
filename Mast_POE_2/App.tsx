@@ -277,15 +277,26 @@ export default function App(): JSX.Element {
   return (
     <SafeAreaView style={{flex:1,backgroundColor:currentTheme.bg}}>
       <StatusBar backgroundColor={currentTheme.primary} barStyle={themeName === "Dark" ? "light-content" : "dark-content"} />
-      <Header title="Chef Christoffel" sub="Fresh menu — always up to date" count={menu.length} s={s} themeName={themeName} cycleTheme={cycleTheme} cartCount={totalItems} openCart={()=>setCartOpen(true)} />
-      <View style={{flex:1}}>
-        {screen==="customer"
-          ? <Customer menu={menu} openManager={()=>setScreen("chef")} s={s} cart={cart} addToCart={addToCart} />
-          : <Chef menu={menu} add={add} remove={remove} back={()=>setScreen("customer")} s={s} />
-        }
-      </View>
+      <Header title="Chef Christoffel" sub="Fresh menu — always up to date" count={menu.length} s={s} themeName={themeName} cycleTheme={cycleTheme} />
+       <View style={{flex:1}}>
+         {screen==="customer"
+           ? <Customer menu={menu} openManager={()=>setScreen("chef")} s={s} cart={cart} addToCart={addToCart} />
+           : <Chef menu={menu} add={add} remove={remove} back={()=>setScreen("customer")} s={s} />
+         }
+       </View>
 
-      <Nav screen={screen} setScreen={setScreen} s={s} />
+      {/* Footer cart preview */}
+      {screen === "customer" && (
+        <View style={[s.cart, { bottom: 74 }]}>
+          <Text style={s.cartTxt}>{totalItems} items • R{totalPrice.toFixed(2)}</Text>
+          <View style={{flexDirection:'row',alignItems:'center'}}>
+            <TouchableOpacity style={[s.primary,{paddingVertical:8,paddingHorizontal:14,borderRadius:8,marginRight:8}]} onPress={()=>setCartOpen(true)}><Text style={s.pTxt}>Open Cart</Text></TouchableOpacity>
+            <TouchableOpacity onPress={clearCart} style={{paddingVertical:8,paddingHorizontal:12,borderRadius:8,backgroundColor:'#F3F4F6'}}><Text style={{fontWeight:'800'}}>Clear</Text></TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+       <Nav screen={screen} setScreen={setScreen} s={s} />
 
       {/* Cart modal (no checkout) */}
       <Modal visible={cartOpen} animationType="slide" transparent={true} onRequestClose={()=>setCartOpen(false)}>
