@@ -12,25 +12,25 @@ type Dish = { id: string; name: string; description?: string; course: Course; pr
 /**
  * Changelog
  * ---------
- * v1.0.0 - Initial release
+ *  
  * - Basic menu management
  * - Add/remove dishes
  * - Course filtering
  * - Price display
  * 
- * v1.1.0 
+ * 
  * - Added cart functionality
  * - Added dark/light theme
  * - Added price averages per course
  * 
- * v1.2.0
+ * 
  * - Improved UI/UX
  * - Added confirmation dialogs
  * - Fixed cart persistence
  * - Added search functionality
  * - Separated filter screen
  * 
- * v1.3.0
+ * 
  * - Bug fixes and improvements
  * - Better error handling
  * - Improved type safety
